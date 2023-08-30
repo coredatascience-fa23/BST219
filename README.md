@@ -14,14 +14,14 @@
 
 # Office Hours
 
-All office hours will be held in-person and online via Zoom; links will be posted on Canvas.
+All office hours will be held in-person or online via Zoom; links will be posted on Canvas.
 
 | Day       | Time         | Staff    | Location                                        |
 |-----------|--------------|----------|-------------------------------------------------|
-| Monday    | 3:30 - 4:30 pm | Luke     | Building 2, 4th floor, 401                      |
-| Tuesday   | 2:30 - 3:30 pm | Dongdong | Building 2, 4th floor, 437F (401 on August 29)  |
-| Wednesday | 1:00 - 2:00 pm | Dongdong | Building 2, 4th floor, 437F (401 on August 30)  |
-| Thursday  | 1:00 - 2:00 pm | Luke     | Building 2, 4th floor, 401                      |
+| Monday    | 3:30 - 4:30 pm | Luke     | Building 2, 4th floor, 401  (in-person only)                    |
+| Tuesday   | 2:30 - 3:30 pm | Dongdong | Building 2, 4th floor, 437F (zoom available)  |
+| Wednesday | 1:00 - 2:00 pm | Dongdong | Building 2, 4th floor, 437F (401 on August 30) (in-person only) |
+| Thursday  | 1:00 - 2:00 pm | Luke     | Building 2, 4th floor, 401 (in-person only)                      |
 
 # Labs
 
