@@ -132,7 +132,7 @@ gapminder[ix,]
 
 ##### 5) Create a data frame called `algeriagdp` that includes only year and GDP data for Algeria.
 ```{r}
-algeriagdp <- gampminder[gapminder$country == 'Algeria', c('year', 'gdp')]
+algeriagdp <- gapminder[gapminder$country == 'Algeria', c('year', 'gdp')]
 
 ```
 
@@ -159,6 +159,11 @@ gapminder[order(gapminder$life_expectancy, decreasing = T),]
 ```
 
 ##### 6) Create a data frame called `df2` that is ordered so that it shows the data for each country (all years), then the next country (all years), etc.
+
+```{r}
+df2 <- gapminder[order(gapminder$infant_mortality),]
+
+```
 
 
 ### 4. Creating new data
@@ -189,22 +194,44 @@ First, let's see filter. Notice that we don't need to use `df$` infront of the n
 ```{r}
 ### filter
 filter(df, country == 'United States')
+df[df$country == 'United States',]
 
 ### Notice that filter automatically throws out NA -- no need for which()!
 filter(df, infant_mortality < 10)
+df[df$infant_mortality < 10,]
 
 ### Multiple combinations
-filter(df, infant_mortality < 10, year > 1990)
+filter(df, 
+       infant_mortality < 10 | life_expectancy > 80)
+
+
+
 
 ```
 
 #### 1) How many rows have `infant_mortality > 20` and `life_expectancy > 70`?
+```{r}
+### If no NAs, these 2 things behave the same
+### If NAs in one of these conditions, filter throws them out
+### Base R returns rows where condition is TRUE and NA
+
+df_problem1 <- filter(df, infant_mortality > 20, life_expectancy > 70)
+nrow(df_problem1)
+
+df_friend <- df[df$infant_mortality > 20 & df$life_expectancy > 70,]
+nrow(df_friend)
+
+### which() throws out NA
+df_friend <- df[which(df$infant_mortality > 20 & df$life_expectancy > 70),]
+nrow(df_friend)
+```
 
 
 Next we can use select to get column names. select doesn't require that we uses quotes around names.
 ```{r}
-### Select 3 columns
+### Select 3 columns (quotes work fine but not required)
 select(df, country, year, infant_mortality)
+select(df, 'country', 'year', 'infant_mortality')
 
 ### Select everything except the region column
 select(df, -region)
@@ -225,15 +252,36 @@ We can also order a data frame using `arrange()`
 ```{r}
 ### Default is increasing
 arrange(df, infant_mortality)
+df[order(df$infant_mortality),] ### this is kind of ugly
 
 ### use desc() for decreasing
 arrange(df, desc(infant_mortality))
+df[order(df$infant_mortality, decreasing = T),] ### even more ugly
 
 ### sort by continent, then region
 arrange(df, continent, region)
+df[order(df$continent, df$region),] ### even more ugly
+
+
+### First sort by contient [A-Z] then in descending order of IMR
+df4 <- arrange(df, continent, desc(infant_mortality))
 ```
 
 ##### 2) Create a dataset that includes country, year, gdp and population for countries in South-Eastern Asia between 1965 and 2010. Order the data frame by country, then year. Confirm that your code is doing what it's supposed to.
+
+
+```{r}
+### Subset Rows
+df_complex <- filter(df, region == 'South-Eastern Asia')
+
+### Subset Columns
+df_complex <- select(df_complex, country, year, gdp, population)
+
+### Order Result
+df_complex <- arrange(df_complex, country, year)
+df_complex[order(df_complex$country, df_complex$year),]
+
+```
 
 
 ### 2. The pipe operator %>%
@@ -245,13 +293,37 @@ For example, we can create the data frame mentioned above in an elegant, intuiti
 algeriagdp <- 
   gapminder %>% 
   filter(country == 'Algeria') %>% 
-  select(gdp,year)
+  select(gdp, year)
+
+### One Way
+x <- filter(gapminder, country == 'Algeria')
+select(x, gdp, year)
+
+### Another way (hard to read)
+select(filter(gapminder, country == 'Algeria'), gdp, year)
+
 ```
 
 ##### 3) Now, using the pipe operator, create a dataset that includes country, year, gdp and population for countries in South-Eastern Asia between 1965 and 2010. Order the data frame by country, then year. Try to do it all in one command, starting from the `gapminder` dataset, using the pipe operator. Confirm that your code is doing what it's supposed to.
 
 ```{r}
-# your code here
+### Subset Rows
+df_complex <- filter(df, region == 'South-Eastern Asia')
+
+### Subset Columns
+df_complex <- select(df_complex, country, year, gdp, population)
+
+### Order Result
+df_complex <- arrange(df_complex, country, year)
+
+### Same Result!!!
+df_complex <- 
+  gapminder %>% 
+  filter(region == 'South-Eastern Asia') %>% 
+  select(country, year, gdp, population) %>% 
+  arrange(country, year)
+
+
 ```
 
 ### 4. Creating variables
@@ -259,17 +331,36 @@ algeriagdp <-
 We can create variables using `mutate()`.
 
 ```{r}
+gapminder <- mutate(gapminder, 'gdp_per_capita' = gdp/population)
+
+### Same thing
+gapminder <- 
+  gapminder %>% 
+  mutate('gdp_per_capita' = gdp/population)
 
 ```
 
 ##### 1) Create a variable with the approximate number of women in the population. Assume that 52% of the population are women.
 
+```{r}
+gapminder <- mutate(gapminder, 
+                    'n_women' = 0.52 * population,
+                    'n_men' = 0.48 * population)
+```
+
 ##### 2) Calculate an approximation of the number of children born each year based on the `fertility` column, which displays the expected number of children per woman over their reproductive life.
 For this, assume an average reproductive life of 25 years.
+
+```{r}
+gapminder <- 
+  gapminder %>% 
+  mutate('children_per_year' = fertility * n_women/25)
+```
 
 ##### 3) Look up and explore the function `lag()`. Use it to calculate the change in population from the year prior, and assign it to a column called `popchange`.
 
 ```{r}
+1:10 - lag(1:10) 
 
 ```
 
