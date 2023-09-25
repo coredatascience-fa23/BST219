@@ -1,7 +1,79 @@
 #### Recap last lec  ####
 
+# PROGRAMMING BASICS
+# 1. **ifelse()**:  ectorized conditional function in R that allows you to return a value based on whether a condition is TRUE or FALSE. 
+# It takes three arguments:
+# A logical test.
+# A value to return if the test is TRUE.
+# A value to return if the test is FALSE.
+# Sample data frame
+people <- data.frame(
+  name = c("Alice", "Bob", "Charlie", "David"),
+  age = c(15, 32, 17, 22)
+)
+
+# Use ifelse() to categorize age
+people$category <- ifelse(people$age < 18, "Minor", "Adult")
+print(people)
+
+# Or, using the pipe operator
+people <- data.frame(
+  name = c("Alice", "Bob", "Charlie", "David"),
+  age = c(15, 32, 17, 22)
+)
+
+people %>% mutate(
+  category = ifelse(age < 18, "Minor", "Adult")
+)
+
+# Equivalent and useful function
+people %>% mutate(
+  category = case_when(
+    age < 18 ~ "Minor",
+    T ~ "Adult"
+  )
+)
+people %>% mutate(
+  category = case_when(
+    age < 18 ~ "Minor",
+    age >= 18  ~ "Adult"
+  )
+)
+
+# 2. **for loop**: can be nested
+for (i in 1:3) {
+  for (j in 1:3) {
+    # print(paste(i, "x", j, "=", i * j) ) 
+    cat(i, "x", j, "=", i * j, "\n") # 'cat' function is used to format the output
+  }
+}
+
+# cat("hello", "world!")
+# print("hello, world!")
+# print(paste("hello", "world!"))
+
+# 3. **function()**: function can return multiple values (using a list)
+
+calculate_stats <- function(numbers) {
+  mean_val <- mean(numbers)
+  median_val <- median(numbers)
+  sd_val <- sd(numbers)
   
-# ggplot 
+  stats <- list(mean = mean_val, median = median_val, standard_deviation = sd_val)
+  return(stats)
+}
+
+# Use the function
+my_vector <- c(1, 2, 3, 4, 5, 6)
+stats_result <- calculate_stats(my_vector)
+
+stats_result$mean            # Out puts: 3.5
+stats_result$standard_deviation# Outputs: 1.870829
+round(stats_result$standard_deviation, 2) #can change in the function too if you want the default decimal places to be 2
+
+  
+# GGPLOT
+
 # 1. **Conceptual Introduction**:
 # - Start with the idea that `ggplot2` uses a "layered" approach to creating graphics.
 # - Emphasize the Grammar of Graphics philosophy: Data, Aesthetics, and Geometric Objects (`geom`).
