@@ -126,7 +126,7 @@ murders %>% ggplot(aes(population/10^6, total, label = abb)) +
 # 1. review the above code for creating the plot for murders
 # 2. gapminder: as a practice/example  - real-world data visualization (last week's lab covered first half)
 # 3. lab this week: practice with more examples - remember the confusing/misleading graph in the first lecture? 
-# 4. HW2 released 9/25; due in Oct 15. Updated on course website and canvas
+# 4. HW2 released 9/25; due in Oct 22 (extended 1 week). Updated on course website and canvas
 # 5. Don't need to worry about the canvas assigment/hw, they are for TF grading purpose only
 
 labels <- data.frame(country = countries, x = c(1975, 1965), y = c(5, 2.75))
