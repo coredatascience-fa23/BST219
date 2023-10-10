@@ -79,10 +79,13 @@ gapminder %>%
 # Ordering categories by frequency or another metric
 # (instead of alphabetically or by factor level) can make the plot easier to interpret.
 
-
+# 2. Homework related
+# Q1: rate calculation: canvas announcement
+# Q3: sqrt transformation: scale_x_sqrt()
+# Q4: breaks on y-axis: scale_y_sqrt(seq(0, 38, 2)^2)
 
 # Today's lecture
-# 1. data viz principles with a focus on the geom_grid()
+# 1. data viz principles; geom_tile()
 # 2. map - optional but cool
 # 3. no lab this week; lab next week
 # 4. HW2 released 9/25; due in Oct 22. Updated on course website and canvas
