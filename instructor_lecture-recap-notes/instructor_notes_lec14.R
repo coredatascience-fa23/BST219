@@ -52,6 +52,26 @@ gapminder %>%
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
 
 
+# Both methods in ggplot2 transform the data, but they have different implications and use cases. 
+# (1) Transforming data directly within aes():
+# Actual Transformation: This method actually transforms the data values before plotting them. If you use aes(x = log(x_original)), the data is logged before any geom is applied.
+# Axes and Data Points: The axes will be labeled with the transformed values, and any subsequent layer or geom that references this aesthetic will operate on the transformed data.
+# Implication for Modeling: If you fit a model using geom_smooth() or any other modeling function, it will be fitted to the transformed data, which may be inappropriate if you didn't want this.
+
+
+# (1) Transforming data directly within aes():
+# Actual Transformation: This method actually transforms the data values before plotting them. If you use aes(x = log(x_original)), the data is logged before any geom is applied.
+# Axes and Data Points: The axes will be labeled with the transformed values, and any subsequent layer or geom that references this aesthetic will operate on the transformed data.
+# Implication for Modeling: If you fit a model using geom_smooth() or any other modeling function, it will be fitted to the transformed data, which may be inappropriate if you didn't want this.
+# (2) Using scale_x_continuous(trans = ...):
+# Visual Transformation: This method keeps the original data values intact, but changes the scale on which they're displayed. This is purely a visual transformation.
+# Axes and Data Points: The axes will be spaced logarithmically (or the way you transformed the data), but the axis labels will show the original values, making it clear that a log scale is being used.
+# Implication for Modeling: If you fit a model, it's fitted to the original data, not the transformed one.
+# **General recommendations **
+# (1) If you only want to change the visualization aspect of your plot (i.e., the way your data is presented on the plot), then you should use the scale transformation.
+# (2) If you want to actually transform your data and have subsequent layers operate on this transformed data, then you should transform it within aes().
+
+
 # Why the transformation?
 # We sometimes prefer transformations like logarithmic scaling, 
 # sorting, or others on the x or y axes for various reasons.
@@ -81,8 +101,8 @@ gapminder %>%
 
 # 2. Homework related
 # Q1: rate calculation: canvas announcement
-# Q3: sqrt transformation: scale_x_sqrt()
-# Q4: breaks on y-axis: scale_y_sqrt(seq(0, 38, 2)^2)
+# Q3: sqrt transformation: 
+# Q4: breaks on y-axis: 
 
 # Today's lecture
 # 1. data viz principles; geom_tile()
