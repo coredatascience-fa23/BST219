@@ -11,7 +11,25 @@
 
 # 5. **think of color blind**
 
-# 6. **3-d plot**
+# 6. **3-d information**
+library(ggplot2)
+df <- data.frame(
+  x = factor(rep(1:10, each = 10)),
+  y = factor(rep(1:10, 10)),
+  z = runif(100)
+)
+
+df %>% ggplot(aes(x = x, y = y)) + 
+  geom_tile(aes(fill = z)) + 
+  theme_minimal() + 
+  scale_fill_gradient(low = "white", high = "steelblue")
+
+
+library(corrplot)
+data(mtcars)
+M = cor(mtcars)
+corrplot(M)
+
 
 # 7. **know your audience**
 
