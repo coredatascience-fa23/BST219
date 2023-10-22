@@ -21,6 +21,12 @@ wide_data <- read_csv(filename)
 # check the first few rows of your data
 head(wide_data)
 ```
+Fun tip of the day: R has a few built-in ``easter egg" functions that are meant for fun and aren't useful for data analysis, but they showcase the quirkiness of the R community.
+```R
+library(fortunes)
+fortune()
+```
+
 
 ### 1. Reshaping data with `pivot_longer()` and `pivot_wider()`
 Both functions are from the library `tidyverse` which we already loaded in the previous code chunk. 
