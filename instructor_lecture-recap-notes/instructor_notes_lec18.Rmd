@@ -1,0 +1,190 @@
+---
+title: "instructor recap notes - lec 18"
+date: "2023-10-25"
+output: html_document
+---
+
+
+### 0. Random quiz: 
+1. How to check the usage of a function you've never seen / not familiar with? 
+2. How to summarize a variable by another factor variable? (e.g. summarize the mean of grades by homework number)
+
+```{r random quiz and setup, message=FALSE}
+# load the required libraries
+library(tidyverse)
+library(ggplot2)
+library(dslabs)
+library(lubridate)
+
+?mdy
+?lubridate::mdy
+```
+### 1. Joining tables 
+Joining tables is a fundamental operation in data processing and analysis, allowing you to combine information from multiple tables based on common attributes. In R, the `dplyr` package provides various functions to perform different types of joins. Here are six commonly used join functions. 
+
+1. **Inner Join (`inner_join`):**
+   - Combines matching rows from two tables based on a common column (key).
+   - Only rows with matching keys in both tables are included in the result.
+   
+```{r inner join}
+# Example data
+df1 <- data.frame(ID = c(1, 2, 3), Name = c("Alice", "Bob", "Charlie"))
+df2 <- data.frame(ID = c(2, 3, 4), Age = c(25, 30, 35))
+
+# Inner Join
+inner_join(df1, df2, by = "ID")
+# With pipe:
+df1 %>% inner_join(df2, by = "ID")
+```
+
+2. **Left Join (`left_join`):**
+   - Combines all rows from the left table and matching rows from the right table.
+   - Non-matching rows from the right table will have NA values.
+   
+```{r left join}
+# Left Join
+left_join(df1, df2, by = "ID")
+# With pipe:
+df1 %>% left_join(df2, by = "ID")
+```
+
+3. **Right Join (`right_join`):**
+   - Combines all rows from the right table and matching rows from the left table.
+   - Non-matching rows from the left table will have NA values.
+   
+```{r right join}
+# Right Join
+right_join(df1, df2, by = "ID")
+# With pipe:
+
+```
+
+4. **Full Join (`full_join`):**
+   - Combines all rows from both tables.
+   - Non-matching rows will have NA values in the columns from the table where there is no match.
+   
+```{r full join}
+# Full Join
+full_join(df1, df2, by = "ID")
+# With pipe:
+
+```
+
+5. **Semi Join (`semi_join`):**
+   - Keeps all rows from the left table that have matching keys in the right table.
+   - Does not include any columns from the right table.
+   
+```{r semi join}
+# Semi Join
+semi_join(df1, df2, by = "ID")
+# With pipe:
+```
+
+6. **Anti Join (`anti_join`):**
+   - Keeps all rows from the left table that do not have matching keys in the right table.
+   - Does not include any columns from the right table.
+   
+```{r anti join}
+# Anti Join
+anti_join(df1, df2, by = "ID")
+# With pipe:
+
+```
+
+In each of these examples, the `by` argument specifies the column(s) on which to perform the join. **It's important to ensure that the join keys have matching data types in both tables to avoid unexpected results.**
+
+
+### 2. Date and Times in R 
+Working with dates and times can be tricky, but the `lubridate` package in R simplifies the task. 
+The `lubridate` package provides tools to work with date-time data. It simplifies the process of parsing, manipulating, and doing arithmetic with dates and times in R. 
+
+
+#### 2.1 Parsing dates and times from strings
+`lubridate` provides functions to parse dates and times from strings.
+
+1. **ymd(), dmy(), mdy(), ...**
+   - Parse dates from strings.
+```{r parse dates}
+   ymd("2023-10-25")  # Year-Month-Day
+   dmy("25-10-2023")  # Day-Month-Year
+   mdy("10-25-2023")  # Month-Day-Year
+```
+
+2. **ymd_hms(), dmy_hms(), mdy_hms(), ...**
+   - Parse dates and times from strings.
+```{r parse dates and times}
+   ymd_hms("2023-10-25 12:34:56", tz = "EST")
+```
+
+#### 2.2 Manipulating date-time data
+
+1. **year(), month(), day(), ...**
+   - Extract components of a date-time object.
+```{r manipuate date time}
+   date <- ymd("2023-10-25")
+   year(date)  # 2023; numeric
+   month(date)  # 10; numeric
+   day(date)  # 24; numeric
+```
+
+2. **today(), now()**
+   - Get today's date and the current date-time.
+```{r today now}
+   today()
+   now()
+   ymd("2023-12-11") - today()
+```
+
+#### 2.3 Arithmetic with date-time data
+
+1. **Duration:**
+   - Create a duration object, which represents a time span.
+```{r duration}
+   dur <- ddays(1) + dhours(3)  # 1 day and 3 hours
+```
+
+2. **Period:**
+   - Create a period object, which represents a time span in human terms (days, months, etc.).
+```{r period}
+   per <- days(1) + months(1)  # 1 month and 1 day
+```
+
+3. **Date-time arithmetic:**
+   - Add or subtract duration or period objects from date-time objects.
+```{r date time arithmetic}
+   date + dur  # add duration
+   date + per  # add period
+```
+
+#### 2.3 Plot
+# Create a dataset
+```{r plot time}
+data <- data.frame(
+  Date = seq(as.Date("2023-01-01"), by = "month", length.out = 12),
+  Value = c(10, 20, 15, 25, 30, 35, 40, 45, 50, 55, 60, 65)
+)
+
+# Create the plot
+data %>% ggplot(aes(x = Date, y = Value)) +
+  geom_line() +  # Line plot
+  geom_point() +  # Points
+  labs(
+    title = "Monthly Values in 2023",
+    x = "Date",
+    y = "Value"
+  ) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +  # Format x-axis dates
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + # Adjust x ticks orientation 
+  labs(x = "date",
+       y = "value")
+
+```
+
+### 3. Today's lecture
+- HW3 released; Due Nov 5 (2 late days)
+- Midterm to be released on Nov 8 (due Nov 22) **no free late days**
+- Final project options released on our [course website](https://coredatascience-fa23.github.io/project/). Follow the instructions and fill out the [preference form](https://docs.google.com/forms/d/e/1FAIpQLSfvhegiqPG-jQtQvqaIz6jnyLrSv-sOpiF4V3qvQdSTMHK3zQ/viewform) by **Nov 6**.
+- Find a time (office hours preferably) to meet with TF (20 minutes) before Nov 17 to review your project. 
+- Today: New module: probability and regression (yay!)
+- Lab this Friday: more practices on advanced data wrangling
+
