@@ -1,0 +1,82 @@
+---
+title: "instructor recap notes - lec 19"
+date: "2023-10-30"
+output: html_document
+---
+
+
+### 1. Understanding Linear Regression 
+
+**Definition**: Linear regression is a statistical method that models the relationship between a dependent variable and one or more independent variables by fitting a linear equation to observed data.
+
+
+### Motivations for Using Linear Regression in Epidemiology and Public Health:
+
+
+**1. Understanding Relationships**:
+
+- Determine the relationship between outcomes and predictors 
+- Example: Assessing how factors like smoking and diet influence the risk of heart disease.
+
+**2. Prediction and Forecasting**:
+
+- Predict future  outcomes based on current data.
+- Example: Predicting the number of flu cases in the upcoming season based on vaccination rates and previous season data.
+
+**3. Factor Importance**:
+
+- Identify which factors have the most significant impact on an outcome.
+- Example: Determining that air quality has a more profound effect on asthma rates than pollen counts in a particular region.
+
+**4. Model Simplicity and Interpretability**:
+
+- Provides a clear and **interpretable** model 
+- Example: A coefficient in a model might indicate the reduction in lung cancer cases for every 10% decrease in smoking prevalence.
+
+**5. Basis for More Complex Models**:
+
+- Serve as a foundation for more complex models.
+- Example: Logistic regression can determine the odds of developing a disease based on several risk factors.
+
+
+### 2. Correlation Coefficient (`cor()`) 
+The cor() function in R is used to compute the correlation coefficient between two or more variables. The correlation coefficient measures the strength and direction of the linear relationship between variables. 
+
+**1. Nature of Relationship**:
+
+- Captures linear relationships
+
+- Example: Vitamin intake and immunity might not have a simple linear relationship, especially if there's a threshold effect.
+
+**2. No Information on Slope**:
+
+- Correlation doesn't give the slope of the relationship.
+- Example: Knowing the exact decrease in heart disease cases for every 1% increase in physical activity is more actionable than just knowing they're negatively correlated.
+
+**3. Doesn't Handle Multiple Predictors**:
+
+- Correlation is limited to two variables, but health outcomes are influenced by multiple factors.
+- Example: Understanding obesity rates isn't just about correlating it with caloric intake; one must also consider exercise, genetics, and metabolic rates.
+
+**4. Ambiguity in Causality**:
+
+- Correlation does not imply causation.
+- Example: Even if sedentary behavior and certain diseases are correlated, one cannot immediately conclude that lack of physical activity directly causes the diseases without further investigation.
+
+**5. Vulnerability to Outliers**:
+
+- Outliers can heavily influence the correlation coefficient.
+- Example: A sudden outbreak of a rare disease in a small community can skew data and correlations for a larger region.
+
+
+
+
+
+### 3. Today's lecture
+- HW3 released; Due Nov 5 (2 late days)
+- Midterm to be released on Nov 8 (due Nov 22) **no free late days**
+- Final project options released on our [course website](https://coredatascience-fa23.github.io/project/). Follow the instructions and fill out the [preference form](https://docs.google.com/forms/d/e/1FAIpQLSfvhegiqPG-jQtQvqaIz6jnyLrSv-sOpiF4V3qvQdSTMHK3zQ/viewform) by **Nov 6**.
+- Find a time (office hours preferably) to meet with TF (20 minutes) before Nov 17 to review your project. 
+- Today: Regression
+
+
