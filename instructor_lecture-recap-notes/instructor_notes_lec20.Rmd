@@ -1,0 +1,229 @@
+---
+title: "instructor recap notes - lec 20"
+date: "2023-11-01"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+# load the required libraries
+library(tidyverse)
+library(ggplot2)
+library(dslabs)
+library(broom)
+```
+
+### 1.  Linear Regression in R
+
+**Definition**: Linear regression is a statistical method that models the relationship between a dependent variable and one or more independent variables by fitting a linear equation to observed data.
+
+---
+
+#### 1.1 Simple Linear Regression
+
+When there's just one independent variable, it's called simple linear regression.
+
+**Equation**: \( Y = \beta_0 + \beta_1X + \epsilon \) 
+
+( _equivalent to $\mathbb{E}(Y|X) = \beta_0 + \beta_1 X$_ )
+
+Where:
+
+- \( Y \) is the dependent variable.
+- \( X \) is the independent variable.
+- \( \beta_0 \) is the intercept.
+- \( \beta_1 \) is the slope.
+- \( \epsilon \) is the error term.
+
+**Example with R**:
+
+We'll use the `murders` dataset available in `dslabs`. We want to predict `total` (murders) based on the population in million. 
+
+```{R simple linear regression example}
+
+
+
+library(dslabs)
+# Reading in data 
+data(murders)
+# Data wrangling
+murders <- murders %>% 
+  mutate(pop_in_million = population / 1000000)
+# Fitting the model
+model <- lm(total ~ pop_in_million, data = murders)
+```
+
+**Summary of the model**
+
+1. with `summary()`
+```{r Summary}
+# Summary of the model
+summary(model)
+```
+2. with `tidy()`
+```{r tidy}
+# Tidy summary of the model (broom package)
+library(broom)
+tidy(model)
+```
+3. with `glance()`
+```{r glance}
+# One row summary model fit statistics
+glance(model)
+```
+
+**Using pipe operators**
+```{r pipe}
+# Using pipe and summary
+murders %>% 
+  mutate(pop_in_million = population / 1000000) %>% 
+  lm(total ~ pop_in_million, data = .) %>% 
+  summary()
+
+
+
+# Using pipe and tidy
+murders %>% 
+  mutate(pop_in_million = population / 1000000) %>% 
+  lm(total ~ pop_in_million, data = .) %>% 
+  tidy()
+
+
+# Using pipe and glance
+murders %>% 
+  mutate(pop_in_million = population / 1000000) %>% 
+  lm(total ~ pop_in_million, data = .) %>% 
+  glance()
+```
+**Fit stratified models following `group_by()`**
+```{r group by}
+# Group by a binary region (Northeast+North Central vs. South+West) then fit model 
+murders <- murders %>% 
+  mutate(region_bin = case_when(
+    region %in% c("Northeast", "North Central") ~ "Region 1",
+    region %in% c("South", "West") ~ "Region 2"
+  ),
+  region_bin = as.factor(region_bin)) 
+
+# Is the following code correct?
+murders %>% group_by(region_bin) %>% 
+  lm(total ~ pop_in_million, data = .)
+
+# The above yield the same results as the following, group_by() didn't work
+murders %>% lm(total ~ pop_in_million, data = .)
+
+# Use do() with tidy()
+murders %>% group_by(region_bin) %>% 
+  do(lm(total ~ pop_in_million, data = .) %>% tidy())
+
+```
+
+
+---
+
+#### 1.2 Multiple Linear Regression
+
+When there's more than one independent variable, it's called multiple linear regression.
+
+**Equation**: \( Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + ... + \epsilon \)
+
+**Example with R**:
+
+Using the `murders` dataset again, we'll predict `total` based on both the population in million (`pop_in_million`) and the dichotomized region variable (`region_bin`).
+
+```{R example mlr}
+# Data wrangling to create pop_in_million and region_bin
+murders <- murders %>% mutate(
+  pop_in_million = population / 1000000,
+  egion_bin = case_when(
+    region %in% c("Northeast", "North Central") ~ "Region 1",
+    region %in% c("South", "West") ~ "Region 2"
+  ),
+  region_bin = as.factor(region_bin)
+)
+# Fitting the model
+model_multi <- lm(total ~ pop_in_million + region_bin, data = murders)
+
+# Summary of the model
+summary(model_multi)
+
+# Alternatively, summary of coefficient estimate using tidy
+tidy(model_multi)
+```
+**Change the reference level for a factor covariate / predictor / feature**
+```{r change ref level}
+murders %>% mutate(
+  region_bin = relevel(region_bin, ref = "Region 2")
+) %>% 
+  lm(total ~ pop_in_million + region_bin, data = .) %>% 
+  summary()
+```
+
+#### 1.3 (Optional) Assumptions of Linear Regression and Model Diagnostics
+
+1. **Linearity**: The relationship between the independent and dependent variable is linear.
+2. **Independence**: The residuals are independent.
+3. **Homoscedasticity**: The residuals have constant variance.
+4. **Normality**: The residuals are normally distributed.
+
+We can check these assumptions in R using various diagnostic plots:
+
+```{R diagnostic}
+# Diagnostic plots
+par(mfrow = c(2, 2)) # Layout for 4 plots
+plot(model_multi)
+
+# Diagnostic metrics
+glance(model_multi)
+```
+
+AIC (Akaike Information Criterion) and BIC (Bayesian Information Criterion) are both measures used to evaluate the goodness-of-fit of a statistical model. They are particularly useful when comparing multiple models, helping to determine which model is the best fit for the data while considering the complexity of the model.
+
+1. **AIC (Akaike Information Criterion)**:
+   - Developed by Hirotugu Akaike in 1974.
+   - It estimates the relative amount of information lost by a given model.
+   - Formula: \( \text{AIC} = 2k - 2\ln(L) \)
+     - \( k \) is the number of model parameters (i.e., the number of variables in the model).
+     - \( L \) is the maximum likelihood estimation for the model.
+   - AIC takes into account the complexity of a model. It penalizes models that have more parameters (to avoid overfitting), favoring simpler models unless the more complex model provides a significantly better fit.
+
+2. **BIC (Bayesian Information Criterion)**:
+   - Similar to AIC, but it has a stricter penalty for models with more parameters.
+   - Formula: \( \text{BIC} = \ln(n)k - 2\ln(L) \)
+     - \( n \) is the number of observations.
+     - \( k \) is the number of model parameters.
+     - \( L \) is the maximum likelihood estimation for the model.
+
+3. **AIC vs. BIC**:
+   - While both AIC and BIC penalize the complexity of the model, BIC penalizes model complexity more heavily.
+   - AIC tends to favor larger models (i.e., models with more parameters) compared to BIC.
+   - The choice between AIC and BIC may depend on the goals of the analysis. In situations where it's crucial to avoid overfitting, BIC might be preferred because of its stricter penalty on model complexity.
+
+In summary, both AIC and BIC are used to compare and select the best model among a set of candidate models, with lower values indicating better models. They both penalize model complexity, helping to strike a balance between fit and parsimony, but BIC usually imposes a heavier penalty than AIC.
+
+#### 1.4 Predictions
+
+Once you have a model, you can use it to predict on new data:
+
+```{R prediction}
+# Sample new data
+new_data <- data.frame(region_bin = "Region 1", pop_in_million = 8)
+
+# Predicting mpg for the new data
+predict(model_multi, newdata = new_data)
+```
+
+
+
+### 2. Tips:
+- Check the assumptions of linear regression before interpreting the results.
+- Consider multicollinearity in multiple linear regression. This is when two or more independent variables are highly correlated.
+- Consider other models or transformations if linear regression assumptions are not met.
+
+
+### 3. Today's lecture
+- HW3 due Nov 5 (2 late days)
+- Midterm to be released on Nov 8 (due Nov 22) **no free late days**
+- Final project options released on our [course website](https://coredatascience-fa23.github.io/project/). Follow the instructions and fill out the [preference form](https://docs.google.com/forms/d/e/1FAIpQLSfvhegiqPG-jQtQvqaIz6jnyLrSv-sOpiF4V3qvQdSTMHK3zQ/viewform) by **Nov 6**.
+- Find a time (office hours preferably) to meet with TF (20 minutes) before Nov 17 to review your project. 
+- Today: Regression (confounding), machine learning intro
+
