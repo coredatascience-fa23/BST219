@@ -1013,8 +1013,8 @@ tmp <- melanoma %>%
   summarize(prob = mean(status == "Dead")) 
 naive_bayes_curve <- data.frame(x = seq(min(tmp$x), max(tmp$x))) %>%
   mutate(p_hat = dnorm(x, params$avg[2], params$sd[2])*pi/
-           (dnorm(x, params$avg[1], params$sd[1])*pi +
-              dnorm(x, params$avg[2], params$sd[2])*(1-pi)))
+           (dnorm(x, params$avg[2], params$sd[2])*pi +
+              dnorm(x, params$avg[1], params$sd[1])*(1-pi)))
 
 tmp %>% 
   ggplot(aes(x, prob)) +
