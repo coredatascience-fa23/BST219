@@ -1,0 +1,150 @@
+---
+title: "instructor recap notes - lec 21"
+date: "2023-11-06"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+# load the required libraries
+library(tidyverse)
+library(ggplot2)
+library(dslabs)
+library(broom)
+```
+### Random quiz
+I tried to fit a linear regression model with the murders data (predictors: binary region and population in million). I would like to use region 2 as the reference leve. What is the difference between the following code: 
+```{r quiz pt1, eval = FALSE, include = TRUE}
+# Read / load data
+data(murders)
+
+# Fit lm
+murders %>% mutate(
+  pop_in_million = population / 1000000,
+  region_bin = case_when(
+    region %in% c("Northeast", "North Central") ~ "Region 1",
+    region %in% c("South", "West") ~ "Region 2"
+  ),
+  region_bin = as.factor(region_bin),
+  region_bin = relevel(region_bin, ref = "Region 2")
+) %>% 
+  do(tidy(lm(total ~ pop_in_million + region_bin, data = .)))
+
+names(murders)
+```
+and this code:
+```{r quiz, eval = FALSE, include = TRUE}
+# Read / load data
+data(murders)
+
+# Fit lm
+murders <- murders %>% mutate(
+  pop_in_million = population / 1000000,
+  region_bin = case_when(
+    region %in% c("Northeast", "North Central") ~ "Region 1",
+    region %in% c("South", "West") ~ "Region 2"
+  ),
+  region_bin = as.factor(region_bin),
+  region_bin = relevel(region_bin, ref = "Region 2")
+) 
+
+murders %>% do(tidy(lm(total ~ pop_in_million + region_bin, data = .)))
+
+names(murders)
+```
+**Tips of the day**
+
+1. Use  `sessionInfo()` or `devtools::session_info()` to  track the R version and packages you used.
+2. Use `getwd()` to know which directory you are working under. 
+
+
+
+## 1. Recap Notes: Linear Regression with Confounders Using R
+
+### 1.1 Understanding Confounders:
+   - Confounders are variables that are related to both the independent variable and the dependent variable.
+   - Not adjusting for confounders can lead to biased estimates of the effect of the independent variable on the dependent variable.
+
+### 2. Adjusting for Confounders:
+   - In multiple linear regression, we can adjust for confounders by including them as additional predictors in the model.
+
+### 3. Example in `R`:
+
+Suppose we have a dataset `data` with the following variables:
+
+- `y`: the dependent variable (e.g., blood pressure).
+- `x`: the independent variable of primary interest (e.g., body mass index, BMI).
+- `z1`, `z2`, `z3`: potential confounders (e.g., age, gender, smoking status).
+
+```{R example, eval = FALSE}
+# Load necessary package
+library(tidyverse)
+library(broom)
+
+# Fit a linear regression model adjusting for confounders
+model <- lm(y ~ x + z1 + z2 + z3, data = data)
+
+# Summary of the model to view coefficients and statistics (choose one of the three options below)
+summary(model)
+tidy(model)
+glance(model)
+```
+
+**Interpretation**:
+
+- The output of `summary(model)` will give us coefficients for `x`, `z1`, `z2`, and `z3`.
+- The coefficient for `x` represents the estimated change in `y` for a one-unit change in `x`, holding `z1`, `z2`, and `z3` constant.
+
+### 1.4 (optional) Diagnostic Checks:
+
+   - Check for linearity: Plot `y` against each predictor to ensure a linear relationship.
+   - Check for homoscedasticity: Residuals should have constant variance.
+   - Check for normality: Residuals should be normally distributed.
+   - Check for multicollinearity: Predictors should not be too highly correlated.
+
+**Example in R**:
+
+```{R check, eval = FALSE}
+# Plotting residuals
+plot(model$residuals)
+
+# Checking for normality of residuals
+hist(model$residuals)
+
+# Variance Inflation Factor (VIF) to check multicollinearity
+install.packages("car")
+library(car)
+vif(model)
+```
+
+
+
+### 1.5 (optional) Model Assumptions:
+   - Independence: Observations are independent of each other.
+   - Linearity: The relationship between the predictors and the outcome is linear.
+   - Homoscedasticity: The residuals have constant variance at every level of the predictor variables.
+   - Normality: The residuals of the model are normally distributed.
+
+```{R assumption, eval = FALSE}
+# Checking model assumptions with a diagnostic plot
+plot(model)
+
+# Checking independence with the Durbin-Watson test
+install.packages("lmtest")
+library(lmtest)
+dwtest(model)
+```
+
+### 1.6 Conclusion
+
+By including confounders in the regression model, we can more accurately estimate the effect of the independent variable on the dependent variable. It is crucial to interpret the results in the context of the model and the data, and to remember that regression analysis can suggest but not prove causation.
+
+
+## 2. Today's lecture
+- Midterm to be released on Nov 8 (due Nov 22); we will go through logistics on Wednesday **no free late days**
+- We encourage you to **email** TF / instructor the questions you have about Midterms
+- We will post a Google doc with all of the questions students have asked about midterm so we all have the same information
+- **Final project: Please fill out the [preference form](https://docs.google.com/forms/d/e/1FAIpQLSfvhegiqPG-jQtQvqaIz6jnyLrSv-sOpiF4V3qvQdSTMHK3zQ/viewform) **
+- Office hours for the following two weeks are (mostly) designated for team meetings
+- Find a time (office hours preferably) to meet with TF (20 minutes) before Nov 17 to review your project (preferably during office hours, if not please email TF to schedule an appointment). 
+- Today: Machine learning intro
+
