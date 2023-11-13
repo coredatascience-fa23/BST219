@@ -1,0 +1,69 @@
+---
+title: "instructor recap notes - lec 23"
+date: "2023-11-13"
+output: html_document
+---
+### Random quiz
+
+None.
+
+**Tips of the day**
+
+1. use `command` on Mac (or `alt` on Windows) + left / right arrow to jump to the beginning / end of the current line
+2. use `option` on Mac (or `ctrl` on Windows) + left / right arrow to jump to the previous / next word
+
+
+## 1. Recap Notes: Evaluating Machine Learning Model
+
+**1. Confusion Matrix:**
+
+   - The confusion matrix is a fundamental tool for evaluating classification models. It helps in understanding the performance of a model by showing the number of correct and incorrect predictions for each class.
+   - The matrix categorizes predictions into four types: True Positives (TP), True Negatives (TN), False Positives (FP), and False Negatives (FN).
+
+**2. Sensitivity, Specificity, and Precision:**
+
+   - **Sensitivity (True Positive Rate or Recall):** Measures the proportion of actual positives correctly identified. Formula: \(\frac{TP}{TP + FN}\).
+   - **Specificity (True Negative Rate):** Measures the proportion of actual negatives correctly identified. Formula: \(\frac{TN}{TN + FP}\).
+   - **Precision (Positive Predictive Value):** Measures the proportion of positive identifications that were actually correct. Formula: \(\frac{TP}{TP + FP}\).
+
+**3. The `caret` Package in R:**
+
+   - We use the `caret` package to compute these metrics in R. It simplifies the process and provides accurate measures.
+   - Example code to calculate these metrics: 
+```{r cm, eval = FALSE}
+   library(caret)
+   confusionMatrix(data = y_hat, reference = test_set$sex)
+```
+
+**4. Balanced Accuracy and F1 Score:**
+
+   - **Balanced Accuracy:** The average of sensitivity and specificity. Useful in cases of class imbalance.
+   - **F1 Score:** The harmonic average of precision and recall. Formula: \(2 \times \frac{\text{precision} \times \text{recall}}{\text{precision} + \text{recall}}\). It's a balance between sensitivity and precision.
+
+**5. Prevalence and Its Impact:**
+
+   - Prevalence, or the proportion of a particular class in the dataset, can significantly impact a model's utility. In scenarios where prevalence is very low, a high sensitivity might still result in a low precision.
+   - This is especially important in fields like medical diagnostics, where the condition / disease being tested for might be rare.
+
+**6. ROC and Precision-Recall Curves:**
+
+   - **ROC Curve:** Plots sensitivity (TPR) against 1-specificity (FPR). Useful for visualizing the performance of different thresholds.
+   - **Precision-Recall Curve:** Plots precision against recall. More informative in imbalanced datasets.
+
+**7. Contextual Importance of Different Errors:**
+
+   - The choice of whether to prioritize sensitivity, specificity, or precision depends on the specific application and the relative costs of false positives and false negatives.
+
+
+
+
+## 2. Today's lecture
+- Midterm released Nov 8 (due Nov 22) **no free late days**
+  - We encourage you to **email** TF / instructor the questions you have about Midterms
+  - We have posted a [Google doc](https://docs.google.com/document/d/1YEHtKNvGRRw-YuOZjYD9CIQ9FJUCeDAi/edit) with all of the questions students have asked about midterm so we all have the same information
+- Final project teams:
+  - Office hours for the following two weeks are (mostly) designated for team meetings
+  - Find a time (office hours preferably) to meet with TF (20 minutes) before Nov 17 to review your project (preferably during office hours). For meetings at other times, please email us or [schedule here](https://calendly.com/lukebenz-gei/20min?month=2023-11).
+- Today: Machine learning intro (naive Bayes, logistic regression; distance and k-NN)
+- Lab this Friday: logistic regression and naive Bayes practice
+
