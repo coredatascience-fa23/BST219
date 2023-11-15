@@ -1,0 +1,137 @@
+---
+title: "instructor recap notes - lec 24"
+date: "2023-11-15"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+# load the required libraries
+library(tidyverse)
+library(ggplot2)
+library(dslabs)
+library(broom)
+```
+### Random quiz
+
+How many classification algorithms have we learnt so far?
+
+**Tips of the day**
+
+The `R` package e1071 is named after the course number of a class taught at TU Wien (Vienna University of Technology) in Austria. The course, titled "E1071" - [Statistische](https://www.youtube.com/watch?v=LTHyuGTeseI) [Verfahren](https://www.youtube.com/watch?v=XIv5zYEVxJA) (which translates to "Statistical Methods" in English), was taught by the creators of the package. 
+They decided to use the course's number as the name for the package. 
+This package includes functions for various statistical techniques, including support vector machines, short-time Fourier transform, fuzzy clustering, and others. 
+
+It's a good example of how academic work can directly contribute to the development of widely-used software tools in the field of data science and statistics.
+
+
+## 1. Logistic regression and Naive Bayes
+
+**1. Workflow of building a classification ML model**
+
+   - Split data 
+   - Train model using training data 
+   - Make classification / predictions using test data
+   - Evaluation
+      - `confusionMatrix`
+
+
+**2. Logistic regression**
+
+  - It's used for binary outcomes (e.g., alive or dead in the melanoma example).
+  - Estimates the probability of an event (e.g., death) based on predictors (e.g., tumor thickness).
+  - Ensuring predictions stay within the 0-1 probability range.
+  - Logistic regression transforms predictions using the logistic function to maintain this range.
+  - In R, we use `glm` function for logistic regression.
+```{r, eval = FALSE}
+# Assuming 'data' is your dataset with 'outcome' as the binary response variable and 'predictor' as the predictor.
+model_logistic <- glm(outcome ~ predictor, data = data, family = "binomial")
+```
+
+**3. Naive Bayes:**
+
+  - It also estimates probabilities but approaches the problem by assuming each feature is independent.
+  - The approach is based on Bayes theorem, using prior knowledge (prevalence) and the likelihood.
+  - Naive Bayes is particularly useful when the predictors have a known distribution (e.g., normal distribution for tumor thickness).
+  - Implemented in R using the `naiveBayes` function.
+```{r, eval = FALSE}  
+library(e1071)
+# Assuming 'data' is your dataset with 'Class' as the response variable.
+model <- naiveBayes(Class ~ predictor, data = data)
+```
+
+**Key Differences:**
+
+  - Logistic Regression fits a linear boundary (decision surface) in the predictor space, while Naive Bayes doesn’t necessarily assume a linear boundary.
+  - Naive Bayes is often faster and works well with high-dimensional data but can be less accurate due to the assumption of independence among predictors.
+  - Logistic Regression can provide more accurate results, especially when the independence assumption of Naive Bayes is violated, but it might struggle with very high-dimensional data.
+
+
+### 2. Understanding Multiple Predictors and the Concept of Distance in Machine Learning
+
+When dealing with machine learning problems involving multiple predictors, the concept of distance becomes important. This concept helps in understanding how similar or different various data points are from each other, influencing how models like clustering and classification work.
+
+
+**1. Distance in Machine Learning:**
+
+   - Distance measures how close or far apart data points are in the feature space. It’s a core concept in many machine learning algorithms, especially in clustering and nearest neighbor algorithms.
+
+**2. Euclidean Distance:**
+
+   - The most common distance metric, Euclidean distance, is the straight-line distance between two points in Euclidean space. In two dimensions, it’s calculated as \(\sqrt{ (A_x-B_x)^2 + (A_y-B_y)^2}\).
+   - This concept extends to higher dimensions
+
+**3. Distance in High Dimensions:**
+
+   - In high-dimensional spaces, points are defined in terms of many features. For example, in a dataset with 784 features, a data point is located in a 784-dimensional space.
+   - The distance between two points in this space is the square root of the sum of the squared differences across all dimensions.
+   - In the digit recognition case, each digit is represented in a 784-dimensional space (each pixel is a dimension).
+   - Distance measures can help determine how similar two digits are, based on their pixel intensities.
+
+**5. Computing Distance in R:**
+
+   - Distances can be computed using matrix operations in R. For example, the distance between two observations in the digit dataset is computed as the square root of the sum of squared differences across all pixel values.
+   - The `dist` function in R provides a convenient way to compute distances between multiple points.
+
+
+
+### 3. Understanding k-Nearest Neighbors (kNN) in Machine Learning
+
+The k-Nearest Neighbors (kNN) algorithm is a versatile and easy-to-understand method used in machine learning, especially useful when dealing with multiple dimensions.
+
+#### Overview of kNN:
+
+1. **Basic Principle:**
+
+   - kNN estimates the probability of a new point \( \mathbf{x} \) by averaging the outcomes of the \( k \) nearest points to \( \mathbf{x} \) in the feature space.
+
+2. **Adapting to Multiple Dimensions:**
+
+   - kNN easily adapts to scenarios with multiple predictors by defining distances based on the feature space.
+
+3. **Flexibility Control:**
+
+   - The choice of \( k \) (the number of nearest neighbors considered) controls the flexibility of the model. Smaller \( k \) values lead to more flexible models, while larger \( k \) values make the model smoother and less flexible.
+
+#### Practical Application:
+
+- **Comparison with Logistic Regression:**
+  - In a digit recognition example, kNN is compared to logistic regression. The kNN model, even with a default \( k = 5 \), shows improved accuracy over logistic regression.
+
+- **Over-training and Over-smoothing:**
+  - Over-training happens with very small \( k \) values (like \( k = 1 \)), leading to perfect accuracy on training data but poor generalization. Conversely, over-smoothing occurs with very large \( k \) values, making the model too generalized.
+
+- **Finding the Optimal \( k \):**
+  - Plotting accuracy for different \( k \) values helps in finding an optimal balance. For instance, \( k = 11 \) provides a decent estimate of the true function in the digit example.
+
+
+
+## 2. Today's lecture
+- Midterm released Nov 8 (due Nov 22) **no free late days**
+  - We encourage you to **email** TF / instructor the questions you have about Midterms
+  - We have updated the  [Google doc](https://docs.google.com/document/d/1YEHtKNvGRRw-YuOZjYD9CIQ9FJUCeDAi/edit) with all of the questions students have asked about midterm so we all have the same information
+- Final project teams:
+  - Office hours for the following two weeks are (mostly) designated for team meetings
+  - Find a time (office hours preferably) to meet with TF (20 minutes) before Nov 17 to review your project (preferably during office hours). For meetings at other times, please email TF or [schedule here](https://calendly.com/lukebenz-gei/20min?month=2023-11).
+- Today: knn, lda, qda
+- Lab this Friday, Nov 17
+
