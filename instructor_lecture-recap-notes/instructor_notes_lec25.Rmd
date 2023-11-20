@@ -1,0 +1,437 @@
+---
+title: "instructor recap notes - lec 25"
+date: "2023-11-20"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+rm(list=ls())
+# load the required libraries
+library(tidyverse)
+library(ggplot2)
+library(dslabs)
+library(broom)
+library(caret)
+library(e1071)
+library(MASS)
+library(pROC)
+```
+### Random quiz
+
+What are the steps to train a ML model? 
+
+**Tips of the day**
+
+use `;` to run multiple commands in one line (not recommended but sometimes handy)
+
+
+
+## 1. Recap on classification algorithms 
+
+- logistic: `glm()` with `family = binomial`
+- naive Bayes: `naiveBayes()` 
+- k nearest neighbors: `knn3()`
+- quadratic discriminant analysis and linear discriminant analysis: `qda()` and `lda()`
+
+
+### 1.0 Data prep
+```{r digits27 example, message=FALSE, warning=FALSE}
+# Read in raw data 
+url <- "https://raw.githubusercontent.com/datasciencelabs/data/master/hand-written-digits-train.csv"
+digits <- read_csv(url)
+dat <- digits %>% filter(label %in% c(2,7))
+
+# dim(dat)
+# names(dat)
+# table(dat$label)
+
+
+# Create the two continuous predictors 
+dat <- mutate(dat, label =  as.character(label)) %>% 
+       mutate(y = ifelse(label == "2", 0, 1))
+row_column <- expand.grid(row=1:28, col=1:28)
+ind1 <- which(row_column$col <= 14 & row_column$row <= 14)
+ind2 <- which(row_column$col > 14  & row_column$row >  14)
+ind <- c(ind1,ind2)
+X <- as.matrix(dat[,-1])
+X <- X > 200
+X1 <- rowSums(X[,ind1])/rowSums(X)
+X2 <- rowSums(X[,ind2])/rowSums(X)
+dat <- mutate(dat, X_1 = X1, X_2 = X2)
+
+
+# names(dat)
+# head(dat$X_1); head(dat$X_2); head(dat$y)
+# nrow(dat)
+
+```
+
+For illustration purposes let's a subset of 1,000 handwritten digits:
+```{r illustration dataset}
+set.seed(1120)
+mydat <- dat %>% 
+  slice_sample(n = 1000) %>% # slice_sample() or sample_n() in our lecture notes
+  dplyr::select(y, X_1, X_2) %>% 
+  mutate(y = as.factor(y))
+
+# head(mydat)
+# names(mydat)
+```
+
+
+### 1.1 Logistic regression
+**Step 1: Create training and test set**
+```{r logistic step 1}
+# Create train and test test
+set.seed(1120)
+train_index <- createDataPartition(y = mydat$y, times = 1, p = 0.5, list = FALSE)
+train_set <- mydat[train_index,] 
+test_set <- mydat[-train_index,]
+```
+Note that lecture notes used `slice()` with was also okay but deprecated in newer version of dplyr package.
+
+
+**Step 2: Train the model (with logistic regression)**
+```{r logistic step 2}
+# Train model
+fit_logistic <- glm(y ~ X_1 + X_2, data = mydat, family = "binomial")
+```
+Alternatively, use `.` here if all of the remaining columns are to be used as predictors 
+`fit_logistic <- glm(y ~ ., data = mydat, family = "binomial")` 
+
+**Step 3: Obtain the predicted classes **
+```{r logistic step 3}
+# Obtain the predicted probability and labels (classes)
+p_hat_logistic <- predict(fit_logistic, newdata = test_set, type = "response")
+y_hat_logistic <- ifelse(p_hat_logistic > 0.5, 1, 0)
+```
+We could use `?predict.glm` to check the possible values for `type` argument. 
+The default is on the scale of the linear predictors (i.e., log-odds for logistic regression). 
+The `type = "response"` for logistic regression gives the predicted probabilities. 
+Then we assigned classes based on the cutoff `0.5` here. 
+
+**Step 4: Evaluation **
+```{r logistic step 4}
+# Evaluate performance
+cm_logistic <- confusionMatrix(data = as.factor(y_hat_logistic), 
+                reference = as.factor(test_set$y),
+                positive = "1")
+cm_logistic
+```
+Note that we used `as.factor()` here to convert the predicted classes and true classes to factor objects. 
+
+**Step 5. Explain your ML model performance**
+
+The overall accuracy was `r round(cm_logistic$overall["Accuracy"],2)` with a sensitivity of `r round(cm_logistic$byClass["Sensitivity"],2)` and a specificity of `r round(cm_logistic$byClass["Specificity"],2)`.
+The sensitivity and specificity were similar, meaning the model was as good at correctly predicting the positive classes (digits 7) as the negative classes (digits 2).
+Looking at the confusion matrix, the majority of positives (digits 7) were classified as positive and the majority of negatives (digits 2) were classified as negative.
+
+## 1.2 Naive Bayes
+**Step 1: Create training and test set**
+```{r nb step 1}
+# Create train and test test
+set.seed(1120)
+train_index <- createDataPartition(y = mydat$y, times = 1, p = 0.5, list = FALSE)
+train_set <- mydat[train_index,] 
+test_set <- mydat[-train_index,]
+```
+
+
+**Step 2: Train the model (with naive Bayes)**
+```{r nb step 2}
+# Train model
+fit_nb <- naiveBayes(y ~ X_1 + X_2, data = mydat)
+```
+Alternatively, use `.` here if all of the remaining columns are to be used as predictors 
+`fit_nb <- naiveBayes(y ~ ., data = mydat)` 
+
+**Step 3: Obtain the predicted classes **
+```{r nb step 3}
+# Obtain the predicted classes
+y_hat_nb <- predict(fit_nb, newdata = test_set)
+```
+We could use `?predict.naiveBayes` to check the possible values for `type` argument. 
+The default is `class` (i.e., directly output the predicted classes). 
+The `type = "raw"` for naive Bayes gives the posterior probability for each class. The class with maximal probability will be returned as the predicted class (default `type = "class"`)
+
+To see this:
+```{r nb step 3 equivalent}
+p_hat_nb <-  predict(fit_nb, newdata = test_set, type = "raw")[,2]
+y_hat_nb2 <- ifelse(p_hat_nb > 0.5, 1, 0)
+
+# y_hat_nb == y_hat_nb2
+```
+
+**Step 4: Evaluation **
+```{r nb step 4}
+# Evaluate performance
+cm_nb <- confusionMatrix(data = as.factor(y_hat_nb), 
+                reference = as.factor(test_set$y),
+                positive = "1")
+cm_nb
+```
+Note that we used `as.factor()` here to convert the predicted classes and true classes to factor objects. 
+
+**Step 5. Explain your ML model performance**
+
+The overall accuracy was `r round(cm_nb$overall["Accuracy"],2)` with a sensitivity of `r round(cm_nb$byClass["Sensitivity"],2)` and a specificity of `r round(cm_nb$byClass["Specificity"],2)`.
+The sensitivity and specificity were similar, meaning the model was as good at correctly predicting the positive classes (digits 7) as the negative classes (digits 2).
+Looking at the confusion matrix, the majority of positives (digits 7) were classified as positive and the majority of negatives (digits 2) were classified as negative.
+
+## 1.3 K nearest neighbors (KNN)
+**Step 1: Create training and test set**
+```{r knn step 1}
+# Create train and test test
+set.seed(1120)
+train_index <- createDataPartition(y = mydat$y, times = 1, p = 0.5, list = FALSE)
+train_set <- mydat[train_index,] 
+test_set <- mydat[-train_index,]
+```
+
+
+**Step 2: Train the model (with knn)**
+```{r knn step 2}
+# Train model (with k = 5)
+fit_knn <- knn3(y ~ X_1 + X_2, data = mydat, k = 5)
+```
+Alternatively, use `.` here if all of the remaining columns are to be used as predictors 
+`fit_knn <- knn3(y ~ ., data = mydat, k = 5)` 
+
+**Step 3: Obtain the predicted classes **
+```{r knn step 3}
+# Obtain the predicted classes
+p_hat_knn <- predict(fit_knn, newdata = test_set)[,2]
+y_hat_knn <- ifelse(p_hat_knn > 0.5, 1, 0)
+```
+We could use `?predict.knn3` to check the possible values for `type` argument. 
+The default is `prob` (i.e., the proportion of the votes for the classes). 
+The `type = "class"` for knn gives class prediction. 
+
+To see this:
+```{r knn step 3 equivalent}
+y_hat_knn2 <- predict(fit_knn, newdata = test_set, type = "class")
+
+# y_hat_knn == y_hat_knn2
+```
+
+**Step 4: Evaluation **
+```{r knn step 4}
+# Evaluate performance
+cm_knn <- confusionMatrix(data = as.factor(y_hat_knn), 
+                reference = as.factor(test_set$y),
+                positive = "1")
+cm_knn
+```
+Note that we used `as.factor()` here to convert the predicted classes and true classes to factor objects. 
+
+**Step 5. Explain your ML model performance**
+
+The overall accuracy was `r round(cm_knn$overall["Accuracy"],2)` with a sensitivity of `r round(cm_knn$byClass["Sensitivity"],2)` and a specificity of `r round(cm_knn$byClass["Specificity"],2)`.
+The sensitivity and specificity were close to each other, meaning the model was as good at correctly predicting the positive classes (digits 7) as the negative classes (digits 2).
+Looking at the confusion matrix, the majority of positives (digits 7) were classified as positive and the majority of negatives (digits 2) were classified as negative.
+
+
+## 1.4 Quadratic discriminant analysis (QDA)
+**Step 1: Create training and test set**
+```{r qda step 1}
+# Create train and test test
+set.seed(1120)
+train_index <- createDataPartition(y = mydat$y, times = 1, p = 0.5, list = FALSE)
+train_set <- mydat[train_index,] 
+test_set <- mydat[-train_index,]
+```
+
+
+**Step 2: Train the model (with qda)**
+```{r qda step 2}
+# Train model
+fit_qda <- qda(y ~ X_1 + X_2, data = mydat)
+```
+Alternatively, use `.` here if all of the remaining columns are to be used as predictors 
+`fit_qda <- qda(y ~ ., data = mydat)`. 
+
+Note that `qda()` is built in the package `MASS`. 
+
+**Step 3: Obtain the predicted classes **
+```{r qda step 3}
+# Obtain the predicted classes
+y_hat_qda <- predict(fit_qda, newdata = test_set)$class
+```
+We could use `?predict.qda` to check the retuned object for `predict(fit_qda, newdata = test_set)`.
+It returns a list of components:
+- `class`: the predicted classification (factor)
+- `posterior`: the posterior probabilities for the classes
+
+If you'd like to determine the class with posterior probabilities:
+```{r qda step 3 equivalent}
+p_hat_qda <- predict(fit_qda, newdata = test_set)$posterior[,2]
+y_hat_qda2 <- ifelse(p_hat_qda > 0.5, 1, 0)
+# y_hat_qda == y_hat_qda2
+```
+
+**Step 4: Evaluation **
+```{r qda step 4}
+# Evaluate performance
+cm_qda <- confusionMatrix(data = as.factor(y_hat_qda), 
+                reference = as.factor(test_set$y),
+                positive = "1")
+cm_qda
+```
+Note that we used `as.factor()` here to convert the predicted classes and true classes to factor objects. 
+But the `y_hat_qda` was a factor object so it is not necessary in this case. 
+
+**Step 5. Explain your ML model performance**
+
+The overall accuracy was `r round(cm_qda$overall["Accuracy"],2)` with a sensitivity of `r round(cm_qda$byClass["Sensitivity"],2)` and a specificity of `r round(cm_qda$byClass["Specificity"],2)`.
+The sensitivity and specificity were close to each other, meaning the model was as good at correctly predicting the positive classes (digits 7) as the negative classes (digits 2).
+Looking at the confusion matrix, the majority of positives (digits 7) were classified as positive and the majority of negatives (digits 2) were classified as negative.
+
+
+## 1.5 Linear discriminant analysis (LDA)
+**Step 1: Create training and test set**
+```{r lda step 1}
+# Create train and test test
+set.seed(1120)
+train_index <- createDataPartition(y = mydat$y, times = 1, p = 0.5, list = FALSE)
+train_set <- mydat[train_index,] 
+test_set <- mydat[-train_index,]
+```
+
+
+**Step 2: Train the model (with lda)**
+```{r lda step 2}
+# Train model
+fit_lda <- lda(y ~ X_1 + X_2, data = mydat)
+```
+Alternatively, use `.` here if all of the remaining columns are to be used as predictors 
+`fit_lda <- lda(y ~ ., data = mydat)`. 
+
+Note that `lda()` is built in the package `MASS`. 
+
+**Step 3: Obtain the predicted classes **
+```{r lda step 3}
+# Obtain the predicted classes
+y_hat_lda <- predict(fit_lda, newdata = test_set)$class
+```
+We could use `?predict.lda` to check the retuned object for `predict(fit_lda, newdata = test_set)`.
+It returns a list of components:
+- `class`: the predicted classification (factor)
+- `posterior`: the posterior probabilities for the classes
+- `x`: scores of test cases 
+
+If you'd like to determine the class with posterior probabilities:
+```{r lda step 3 equivalent}
+p_hat_lda <- predict(fit_lda, newdata = test_set)$posterior[,2]
+y_hat_lda2 <- ifelse(p_hat_lda > 0.5, 1, 0)
+# y_hat_lda == y_hat_lda2
+```
+
+**Step 4: Evaluation **
+```{r lda step 4}
+# Evaluate performance
+cm_lda <- confusionMatrix(data = as.factor(y_hat_lda), 
+                reference = as.factor(test_set$y),
+                positive = "1")
+cm_lda
+```
+Note that we used `as.factor()` here to convert the predicted classes and true classes to factor objects. 
+But the `y_hat_lda` was a factor object so it is not necessary in this case. 
+
+**Step 5. Explain your ML model performance**
+
+The overall accuracy was `r round(cm_lda$overall["Accuracy"],2)` with a sensitivity of `r round(cm_lda$byClass["Sensitivity"],2)` and a specificity of `r round(cm_lda$byClass["Specificity"],2)`.
+The sensitivity and specificity were close to each other, meaning the model was as good at correctly predicting the positive classes (digits 7) as the negative classes (digits 2).
+Looking at the confusion matrix, the majority of positives (digits 7) were classified as positive and the majority of negatives (digits 2) were classified as negative.
+
+## 2. Comparison of ML classification models: ROC and AUC
+
+We have been predicting 1s based on the rules that the predicted (posterior) probability > 0.5. 
+But we my use another cutoff, depending on the cost of each type of error. 
+The Receiver Operator Characteristic Curve (ROC Curve) plots true positive rate versus false positive rate for several choices of cutoff. 
+
+```{r roc, message=FALSE, warning=FALSE}
+library(pROC)
+
+# For logistic fit 
+roc_logistic <- roc(test_set$y, p_hat_logistic)
+plot(roc_logistic)
+
+# For naive Bayes fit
+roc_nb <- roc(test_set$y, p_hat_nb)
+plot(roc_nb)
+
+# For knn fit
+roc_knn <- roc(test_set$y, p_hat_knn)
+plot(roc_knn)
+
+# For qda fit
+roc_qda <- roc(test_set$y, p_hat_qda)
+plot(roc_qda)
+
+# For lda fit
+roc_lda <- roc(test_set$y, p_hat_lda)
+plot(roc_lda)
+```
+
+Alternatively, a useful function for plotting roc curves is `ggroc` where it is straightforward to compare roc curves within one plot.
+
+```{r ggroc}
+ggroc(list("logistic" = roc_logistic)) 
+```
+
+To add another roc curve:
+```{r ggroc multiple}
+ggroc(list("logistic" = roc_logistic,
+           "naive Bayes" = roc_nb)) 
+```
+
+If you'd like to, add a diagonal segment line:
+```{r ggroc two with diag}
+ggroc(list("logistic" = roc_logistic,
+           "naive Bayes" = roc_nb)) +
+  geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), 
+               col = "black", 
+               linetype = "dashed") + 
+  labs(x = "Specificity", 
+       y = "Sensitivity",
+       col = "model")
+```
+
+Now let's add knn, qda, lda:
+```{r ggroc multiple with diag}
+ggroc(list("logistic" = roc_logistic,
+           "naive Bayes" = roc_nb,
+           "knn (k=5)" = roc_knn,
+           "qda" = roc_qda,
+           "lda" = roc_lda)) +
+  geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), 
+               col = "black", 
+               linetype = "dashed") + 
+  labs(x = "Specificity", 
+       y = "Sensitivity",
+       col = "model")
+```
+
+To summarize the roc curves into a single number, in R we can use `auc()`:
+```{r auc}
+auc(roc_logistic)
+auc(roc_nb)
+auc(roc_knn)
+auc(roc_qda)
+auc(roc_lda)
+```
+
+
+
+## 3. Today's lecture
+- Midterm due Nov 22 **no free late days**
+  - We encourage you to **email** TF / instructor the questions you have about Midterms
+  - We have updated the  [Google doc](https://docs.google.com/document/d/1YEHtKNvGRRw-YuOZjYD9CIQ9FJUCeDAi/edit) with all of the questions students have asked about midterm so we all have the same information
+- Final project teams:
+  - Office hours for the following two weeks are (mostly) designated for team meetings
+  - Find a time (office hours preferably) to meet with TF (20 minutes) before Nov 17 to review your project (preferably during office hours). For meetings at other times, please email TF or [schedule here](https://calendly.com/lukebenz-gei/20min?month=2023-11).
+- Today: review the classification algorithms we learnt and how to built a ML model; three classes 
+- No lab this Friday, Nov 24
+- Homework to be released on Nov 23 (short and simple!)
+- HAPPY THANKSGIVING
+
