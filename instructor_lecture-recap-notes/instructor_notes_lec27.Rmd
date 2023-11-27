@@ -1,0 +1,90 @@
+---
+title: "instructor recap notes - lec 27"
+date: "2023-11-27"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+rm(list=ls())
+# load the required libraries
+library(tidyverse)
+library(ggplot2)
+library(dslabs)
+library(broom)
+library(caret)
+library(e1071)
+library(MASS)
+library(pROC)
+```
+
+## 1. Comparison of Classification Algorithms (so far)
+
+
+### Logistic Regression
+
+- **Type**: Supervised learning, linear classifier.
+- **Use Case**: Binary or multiclass classification problems.
+- **Mechanism**: Estimates probabilities using a logistic function.
+- **Pros**:
+  - Provides probabilistic interpretation.
+  - Efficient to train.
+  - Performs well with a clear decision boundary.
+- **Cons**:
+  - Assumes linear decision boundary.
+  - Not suitable for complex relationships in data.
+
+### Quadratic Discriminant Analysis (QDA)
+
+- **Type**: Supervised learning, statistical (linear/quadratic) classifier.
+- **Use Case**: Classification with a Gaussian distribution.
+- **Mechanism**: Assumes each class has its own covariance matrix.
+- **Pros**:
+  - Can model a more complex decision boundary than LDA.
+  - Effective when class distributions are Gaussian.
+- **Cons**:
+  - Requires more data to estimate covariance matrices.
+  - Prone to overfitting with a limited sample size.
+
+## Linear Discriminant Analysis (LDA)
+
+- **Type**: Supervised learning, statistical (linear) classifier.
+- **Use Case**: Multi-class classification.
+- **Mechanism**: Assumes all classes have the same covariance matrix.
+- **Pros**:
+  - Less prone to overfitting than QDA.
+  - Good for dimensionality reduction.
+- **Cons**:
+  - Assumes Gaussian distribution and equal covariance for all classes.
+  - May perform poorly if these assumptions are violated.
+
+### Naive Bayes
+
+- **Type**: Supervised learning, probabilistic classifier.
+- **Use Case**: Text classification, spam filtering.
+- **Mechanism**: Applies Bayes' theorem with the 'naive' assumption of conditional independence between features.
+- **Pros**:
+  - Simple and easy to implement.
+  - Performs well with large feature sets.
+- **Cons**:
+  - The assumption of feature independence is often unrealistic.
+  - May not perform well with correlated features.
+
+## k-Nearest Neighbors (k-NN)
+
+- **Type**: Supervised learning, non-parametric method.
+- **Use Case**: Various classification (and regression) tasks.
+- **Mechanism**: Classifies based on the majority vote of the nearest neighbors.
+- **Pros**:
+  - Simple and effective.
+  - No assumptions about data distribution.
+- **Cons**:
+  - Computationally intensive.
+  - Performance depends heavily on the choice of $k$  and the distance metric.
+
+
+
+## 2. Today's lecture
+- Today: decision tree
+- Lab this Friday, Dec 1 
+- Homework 4 released (short, simple, helpful for project)
+
