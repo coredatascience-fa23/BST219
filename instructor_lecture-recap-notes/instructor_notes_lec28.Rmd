@@ -1,0 +1,61 @@
+---
+title: "instructor recap notes - lec 28"
+date: "2023-11-29"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+rm(list=ls())
+# load the required libraries
+library(tidyverse)
+library(ggplot2)
+library(dslabs)
+library(broom)
+library(caret)
+library(e1071)
+library(MASS)
+library(pROC)
+```
+
+## 1. Decision Trees
+
+
+### Motivation and terminology
+
+- **High-dimensional feature space**
+  - Reduce dimension
+  - Interpretable 
+- **Tree structure**
+  - Root (root node)
+  - Branches
+  - Leaves (terminal node)
+  - Pure / impure
+
+### Types
+
+- **Regression Tree**
+  - Continuous outcome
+  - Use the mean of the terminal node for prediction of the test set data
+- **Classification Tree**
+  - Categorical outcome / binary outcome
+  - Use the mode of the terminal node for prediction of the test set data
+  
+  
+### Technical details
+
+- Gini index / Entropy (illustration)
+
+
+### Pros and Cons (of a tree)
+
+- Interpretable; reduce dimension
+- Sensitive to sample
+
+
+
+
+## 2. Today's lecture
+- Today: decision tree: bootstrap and random forest! 
+- Lab this Friday, Dec 1 
+- Homework 4 released (short, simple, **helpful for project**), `stratified` 
+
