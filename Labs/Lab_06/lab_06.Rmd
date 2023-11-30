@@ -52,31 +52,48 @@ Using the `pROC` package and the predicted probabilities from the four models th
 ### Question 5
 The code below plots the test set data, as well as decision boundaries calculated from the `fit_knn`, `fit_knn15`, `fit_lda`, and `fit_qda` models that you built in Q2-3. To run, remove the `eval = FALSE` option from the code chunk header. Discuss how the assumptions of the models and the data-generating process are reflected in the shapes of the decision boundaries. 
 
-```{r, eval = FALSE}
+
+### Question 5
+The code below plots the test set data, as well as decision boundaries calculated from the `fit_knn`, `fit_knn15`, `fit_lda`, and `fit_qda` models that you built in Q2-3. To run, remove the `eval = FALSE` option from the code chunk header. Discuss how the assumptions of the models and the data-generating process are reflected in the shapes of the decision boundaries. 
+
+```{r}
 # Create a grid of X1 and X2 values that span the space of the test set
-grid = expand.grid(seq(min(sim_test_set$X1), 
-                       max(sim_test_set$X1), length=200), 
-                   seq(min(sim_test_set$X2), 
-                       max(sim_test_set$X2), length=200))
-colnames(grid) = c("X1", "X2")
+grid <- expand.grid(seq(min(sim_test_set$X1), 
+                        max(sim_test_set$X1), length=200), 
+                    seq(min(sim_test_set$X2), 
+                        max(sim_test_set$X2), length=200))
+colnames(grid) <- c("X1", "X2")
 
 # Predict class labels on all values in the grid for each model
-boundary_df = data.frame(
-  grid, 
-  knn1 = predict(fit_knn1, newdata = grid, type="class"), 
-  knn15 = predict(fit_knn15, newdata = grid, type="class"), 
-  lda = predict(fit_lda, newdata = grid)$class, 
-  qda = predict(fit_qda, newdata = grid)$class)
+boundary_df <- 
+  data.frame(
+    grid, 
+    knn1 = predict(fit_knn1, newdata = grid, type="class"), 
+    knn15 = predict(fit_knn15, newdata = grid, type="class"), 
+    lda = predict(fit_lda, newdata = grid)$class, 
+    qda = predict(fit_qda, newdata = grid)$class
+  )
 
 # Scatterplot of test set observations
 # Overlay contour plot to draw decision boundaries
-boundary_df %>% gather(model, pred, c(knn1, knn15, lda, qda)) %>%
-  ggplot() + 
-  geom_point(aes(x = X1, y = X2, shape = Y), data = sim_test_set) + 
-  stat_contour(aes(x = X1, y = X2, z = as.numeric(pred), color = model), 
+df_contours <- 
+  boundary_df %>% 
+  pivot_longer(cols = c(knn1, knn15, lda, qda),
+               names_to = 'model',
+               values_to = 'pred')
+
+df_plot <- 
+  bind_rows(
+    sim_test_set %>% mutate('dataset' = 'Test'),
+    sim_train_set %>% mutate('dataset' = 'Train')
+  )
+
+ggplot(df_plot) + 
+  facet_wrap(~dataset) + 
+  geom_point(aes(x = X1, y = X2, shape = Y)) +
+  stat_contour(data = df_contours, aes(x = X1, y = X2, z = as.numeric(pred), color = model), 
                lwd = 1, breaks=c(1, 2, 3)) + 
   scale_shape_manual(values = c(16, 3)) +
   scale_color_discrete(name = "Model", 
                        labels = c("kNN (k=1)", "kNN (k=15)", "LDA", "QDA"))
 ```
-

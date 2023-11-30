@@ -8,7 +8,6 @@ In this lab, we will practice working with machine learning terminology and mode
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(caret)
-
 library(dslabs)
 data(brca)
 ```
@@ -39,44 +38,135 @@ test_set = slice(dat, -index_train)
 
 1. Before doing any model fitting, it is always a good idea to perform some exploratory data analysis. Based on the training set, calculate summary statistics and make plots to help you get a better sense of the data. In particular, use your explorations to comment on the prevalence of the outcome, the relationships between the variables, and anything that you would consider unusual. 
 
+```{r}
+### Prevalence of Outcome
+mean(train_set$y) ### 37% M 63% B
+
+
+### Mean of each predictor by outcome value
+train_set %>% 
+  group_by(y) %>% 
+  summarise('mean_radius' = mean(radius_mean),
+            'mean_texture' = mean(texture_mean))
+
+
+### Scatterplot coloring by outcome
+ggplot(train_set, aes(x = radius_mean, y = texture_mean)) + 
+  geom_point(aes(color = labels)) 
+
+```
+
 
 2. Using the `glm` function, fit a logistic regression model to the training set that predicts `y` based on `radius_mean` and `texture_mean`. Don't forget to set `family = "binomial"`. Then, use the `predict` function to get probability estimates for the test set, and convert the probabilities to predicted response labels (use a cutoff of 0.5). 
 
-   Obtain the accuracy, confusion matrix, and other relevant diagnostic statistics for the test set. Explain what the confusion matrix and the sensitivity/specificity are telling you about the types of errors that your model is making. 
+```{r}
+### Fit Model
+model_LR <- 
+  glm(y ~ radius_mean + texture_mean,
+      data = train_set,
+      family = 'binomial')
+
+### Make Predictions
+prob_malignant <- 
+  predict(model_LR,
+          newdata = test_set,
+          type = 'response')
+
+test_set$prob_malignant <- prob_malignant
+test_set$pred_label <- 
+  ifelse(test_set$prob_malignant > 0.5, 1, 0)
+test_set$pred_label_text <- 
+  ifelse(test_set$prob_malignant > 0.5, 'Malignant', 'Benign')
+
+ggplot(test_set, aes(x = radius_mean, y = texture_mean)) + 
+  geom_point(aes(col = pred_label_text))
+
+```
+
+Obtain the accuracy, confusion matrix, and other relevant diagnostic statistics for the test set. Explain what the confusion matrix and the sensitivity/specificity are telling you about the types of errors that your model is making. 
+
+```{r}
+confusionMatrix(data = as.factor(test_set$pred_label_text), 
+                reference = test_set$labels, 
+                positive = "Malignant")
+```
 
 
 3. Build a Naive Bayes classifier for this dataset by hand. Recall that the decision rule can be expressed as
 
-   $$
-   p(x) = \mbox{Pr}(Y=1|X=x) = \frac{f_{X|Y=1}(x) \mbox{Pr}(Y=1)}
+$$
+p(x) = \mbox{Pr}(Y=1|X=x) = \frac{f_{X|Y=1}(x) \mbox{Pr}(Y=1)}
 { f_{X|Y=0}(x)\mbox{Pr}(Y=0) + f_{X|Y=1}(x)\mbox{Pr}(Y=1)}.
-   $$
+$$
 
-   If we assume conditional independence, then 
+If we assume conditional independence, then 
 
-   $$
-   f_{X|Y=1}(x) = f_{X_1|Y=1}(x_1) f_{X_2|Y=1}(x_2) 
-   $$
+$$
+f_{X|Y=1}(x) = f_{X_1|Y=1}(x_1) f_{X_2|Y=1}(x_2) 
+$$
 
-   and 
+and 
 
-   $$
-   f_{X|Y=0}(x) = f_{X_1|Y=0}(x_1) f_{X_2|Y=0}(x_2), 
-   $$
+$$
+f_{X|Y=0}(x) = f_{X_1|Y=0}(x_1) f_{X_2|Y=0}(x_2), 
+$$
 
-   where $X_1$ represents `radius_mean` and $X_2$ represents `texture_mean`. 
+where $X_1$ represents `radius_mean` and $X_2$ represents `texture_mean`. 
 
-   Breaking it down step by step: 
+Breaking it down step by step: 
 
-   - Calculate the prior prevalence of malignant masses $\pi = \mbox{Pr}(Y=1)$ in the training set. 
-   - Calculate the likelihood parameters (the average and standard deviation) for `radius_mean` in the training set. Repeat for `texture_mean`. 
-   - Using the test set data, the parameters from the previous step, and the `dnorm` function, calculate the likelihoods $f_{X_1|Y=1}(x_1)$, $f_{X_2|Y=1}(x_2)$, $f_{X_1|Y=0}(x_1)$, and $f_{X_2|Y=0}(x_2)$. 
-   - Put it all together to calculate the decision rule. 
-   - Convert the probabilities from your decision rule to predicted response labels (use a cutoff of 0.5). 
+- Calculate the prior prevalence of malignant masses $\pi = \mbox{Pr}(Y=1)$ in the training set. 
+- Calculate the likelihood parameters (the average and standard deviation) for `radius_mean` in the training set. Repeat for `texture_mean`. 
+- Using the test set data, the parameters from the previous step, and the `dnorm` function, calculate the likelihoods $f_{X_1|Y=1}(x_1)$, $f_{X_2|Y=1}(x_2)$, $f_{X_1|Y=0}(x_1)$, and $f_{X_2|Y=0}(x_2)$. 
+- Put it all together to calculate the decision rule. 
+- Convert the probabilities from your decision rule to predicted response labels (use a cutoff of 0.5). 
 
-   When you are done, obtain the accuracy, confusion matrix, and other relevant diagnostic statistics for the test set. Compare the performance of your Naive Bayes model with the logistic regression model from Q2. 
+When you are done, obtain the accuracy, confusion matrix, and other relevant diagnostic statistics for the test set. Compare the performance of your Naive Bayes model with the logistic regression model from Q2. 
 
-   Note: If you would like to check your work (or just for future reference), the `e1071` package implements Naive Bayes as the `naiveBayes` function. 
+Note: If you would like to check your work (or just for future reference), the `e1071` package implements Naive Bayes as the `naiveBayes` function. 
 
+```{r}
+### Prevelance 
+pi <- mean(train_set$y)
+
+### Mean/SD of Each Predictor (stratified by tumor type)
+params_radius <- 
+  train_set %>% 
+  group_by(labels) %>% 
+  summarize(avg = mean(radius_mean), 
+            sd = sd(radius_mean))
+
+params_texture <- 
+  train_set %>% 
+  group_by(labels) %>% 
+  summarize(avg = mean(texture_mean), 
+            sd = sd(texture_mean))
+
+### Likelihood Computation
+f <- 
+  test_set %>% 
+  mutate(f0_radius = dnorm(radius_mean, 
+                           params_radius$avg[1], params_radius$sd[1]), 
+         f1_radius = dnorm(radius_mean, 
+                           params_radius$avg[2], params_radius$sd[2]), 
+         f0_texture = dnorm(texture_mean, 
+                            params_texture$avg[1], params_texture$sd[1]), 
+         f1_texture = dnorm(texture_mean, 
+                            params_texture$avg[2], params_texture$sd[2]))
+
+### Estimate Probabilities
+f <- 
+  f %>% 
+  mutate(p_hat_bayes = 
+           f1_radius*f1_texture*pi / (f1_radius*f1_texture*pi + 
+                                  f0_radius*f0_texture*(1-pi))) 
+```
 
 4. Make a scatterplot of `radius_mean` vs. `texture_mean` in the test dataset. Color the points that both models classify as "Benign" in one color, the points that both models classify as "Malignant" in a second color, and the points where the models disagree in a third color. Based on this visualization, does it make sense that these observations are the ones that the two classifiers did not agree on? Do these observations tend to belong to a particular outcome class? 
+
+```{r}
+f$pred_label_text <- ifelse(f$p_hat_bayes > 0.5, 'Malignant', 'Benign')
+ggplot(f, aes(x = radius_mean, y = texture_mean)) + 
+  geom_point(aes(col = pred_label_text))
+
+```
