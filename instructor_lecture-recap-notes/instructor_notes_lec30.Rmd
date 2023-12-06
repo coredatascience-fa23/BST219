@@ -58,25 +58,24 @@ library(glmnet)
 
 # Number of observations and predictors
 n <- 1000 # number of observations
-p <- 20  # number of predictors
+p <- 2000  # number of predictors
+true_p <- 5 
 
 # Generating random predictors
 X <- matrix(rnorm(n * p), n, p)
 
 # Generating a response variable
-# The true model will be a linear combination of some predictors with added noise
-true_coefficients <- runif(p, -5, 5) # random coefficients between -2 and 2
 noise <- rnorm(n) # random noise
 
 # Only a few predictors influence the response, others are just noise
-response <- X %*% true_coefficients + noise
+response <- apply(X[, 1:true_p], 1, sum) + noise
 
 # Combining predictors and response into a data frame
 mydata <- data.frame(response, X)
 names(mydata) <- c("response", paste0("X", 1:p))
 
 # View the first few rows of the dataset
-head(mydata)
+# head(mydata)
 
 ```
 
