@@ -1,0 +1,233 @@
+---
+title: "instructor recap notes - lec 30"
+date: "2023-12-06"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+rm(list=ls())
+# load the required libraries
+library(tidyverse)
+library(ggplot2)
+library(dslabs)
+library(broom)
+library(caret)
+library(tree)
+library(rpart)
+library(MASS)
+library(randomForest)
+library(glmnet)
+```
+
+## 1. Regularization method: shrinkage
+
+Regularization methods are fundamental in machine learning to prevent overfitting and improve model generalization. 
+
+
+### 1.1 Motivation: Bias-Variance Trade-Off
+
+- **What is Overfitting / Underfitting?**
+- **The Bias-Variance Tradeoff**: Understanding how regularization helps to balance bias and variance.
+
+### 1.2 Shrinkage Methods
+
+**Why Shrinkage?**: The principle of penalizing coefficients to reduce model complexity.
+
+#### 1.2.1 Ridge Regression (L2 Regularization)
+
+- **Ridge Regression Overview**
+The term "ridge" refers to the way this penalty term modifies the optimization problem. In the space of the coefficients, the penalty term creates a ridge along which the solution must be found. This ridge imposes a constraint on the coefficients, effectively regularizing them and stabilizing the solution in the presence of multicollinearity.
+So, the name "ridge regression" derives from the geometrical interpretation of this regularization process, where the penalty term creates a ridge in the optimization landscape. This ridge guides the solution towards a more stable and reliable set of coefficients, even in cases where the predictor variables are highly correlated.
+
+- Mathematical Formulation: RSS for Ridge: 
+\( \text{RSS}_{\text{Ridge}} = \sum_{i=1}^{n} (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 + \lambda \sum_{j=1}^{p} \beta_j^2 \)
+
+- Advantages and Limitations
+  - Shrinkage of Coefficients; reduce overfitting.
+  - No variable selection
+
+- **Implementation in R**
+
+Creating a hypothetical dataset for illustration:
+```{r create some data for illustration}
+set.seed(1206)
+
+library(glmnet)
+
+# Creating a hypothetical dataset called `mydata`
+
+# Number of observations and predictors
+n <- 1000 # number of observations
+p <- 20  # number of predictors
+
+# Generating random predictors
+X <- matrix(rnorm(n * p), n, p)
+
+# Generating a response variable
+# The true model will be a linear combination of some predictors with added noise
+true_coefficients <- runif(p, -5, 5) # random coefficients between -2 and 2
+noise <- rnorm(n) # random noise
+
+# Only a few predictors influence the response, others are just noise
+response <- X %*% true_coefficients + noise
+
+# Combining predictors and response into a data frame
+mydata <- data.frame(response, X)
+names(mydata) <- c("response", paste0("X", 1:p))
+
+# View the first few rows of the dataset
+head(mydata)
+
+```
+
+Prepare training and testing set for ridge and lasso:
+
+```{r data splitting}
+# Extracting predictors and response
+predictors_name <- setdiff(names(mydata), "response")
+
+# Create training and test set
+train_index <- createDataPartition(mydata$response, times = 1, p = 0.5, list = FALSE)
+
+train_x <- as.matrix(mydata[train_index, predictors_name])
+test_x <- as.matrix(mydata[-train_index, predictors_name])
+train_y <- mydata$response[train_index]
+test_y <- mydata$response[-train_index]
+```
+
+Fitting a ridge regression model:
+
+```{r ridge}
+fit.ridge.notune <- glmnet(train_x, 
+                    train_y, 
+                    alpha=0)
+
+plot(fit.ridge.notune, xvar = "lambda")
+
+# Cross-validation to find optimal lambda
+cv.ridge <- cv.glmnet(train_x, train_y, alpha=0)
+plot(cv.ridge)
+
+
+# Fit ridge regression with tuned lambda
+fit.ridge <- glmnet(train_x, 
+                    train_y, 
+                    alpha=0, 
+                    lambda=cv.ridge$lambda.1se)
+
+# Make predictions
+predictions.ridge <- predict(fit.ridge, 
+                             s=cv.ridge$lambda.1se, 
+                             newx=test_x)
+
+# Evaluation and print the evaluation metric
+mse.ridge <- mean((test_y - predictions.ridge)^2)
+cat("Ridge Regression MSE:", mse.ridge, "\n")
+```
+
+
+#### 1.2.2 Lasso Regression (L1 Regularization)
+
+- **Lasso Regression Overview**
+"LASSO" stands for "Least Absolute Shrinkage and Selection Operator." It's a regression analysis method that performs both variable selection and regularization to enhance the prediction accuracy and interpretability of the statistical model it produces.
+- **Mathematical Formulation**: RSS for Lasso: \( \text{RSS}_{\text{Lasso}} = \sum_{i=1}^{n} (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 + \lambda \sum_{j=1}^{p} |\beta_j| \)
+
+- **Features** 
+    - Variable Selection: Lasso can shrink some coefficients to zero, effectively performing variable selection and resulting in a model that is easier to interpret.
+    
+- **Implementation in R**
+    
+```{r lasso}
+fit.lasso.notune <- glmnet(train_x,
+                    train_y,
+                    alpha=1)
+
+plot(fit.lasso.notune, xvar = "lambda")
+
+
+# Cross-validation to find optimal lambda for lasso
+cv.lasso <- cv.glmnet(train_x, train_y, alpha=1)
+plot(cv.lasso)
+
+# Fit lasso regression with tuned lambda
+fit.lasso <- glmnet(x=train_x, 
+                    y=train_y, 
+                    alpha=1, 
+                    lambda=cv.lasso$lambda.1se)
+
+
+# Make predictions
+predictions.lasso <- predict(fit.lasso, 
+                             s=cv.lasso$lambda.1se, 
+                             newx=test_x)
+
+
+# Evaluation and print the evaluation metric
+mse.lasso <- mean((test_y - predictions.lasso)^2)
+cat("Lasso Regression MSE:", mse.lasso, "\n")
+
+```
+
+#### 1.2.3 Differences and Similarities Between Ridge and Lasso
+- **Similarities**: 
+  - Both methods add a penalty to the regression model to control overfitting.
+  - Aim to create simpler models while maintaining prediction accuracy
+  
+- **Key Differences**: 
+  - Type of Penalty
+  - Variable selection
+  - Ridge _can_ handle correlated predictors better than Lasso, which might randomly pick one of the correlated predictors.
+
+
+#### 1.2.4 Elastic Net Regression (optional)
+
+- Combining L1 and L2 Regularization
+
+- RSS for Elastic Net: \( \text{RSS}_{\text{Elastic Net}} = \sum_{i=1}^{n} (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 + \lambda \left( \alpha \sum_{j=1}^{p} |\beta_j| + \frac{1-\alpha}{2} \sum_{j=1}^{p} \beta_j^2 \right) \)
+
+- **Advantages of Elastic Net**:  It _can_ outperform Lasso in cases with highly correlated predictors.
+
+- **Implementation in R**
+```{r en}
+# Cross-validation to find optimal lambda for elastic net
+cv.elasticnet <- cv.glmnet(train_x, 
+                           train_y, 
+                           alpha=0.5) # You can adjust the alpha value
+plot(cv.elasticnet)
+# Fit elastic net with tuned lambda
+fit.elasticnet <- glmnet(train_x, 
+                         train_y, 
+                         alpha=0.5,
+                         lambda=cv.elasticnet$lambda.1se)
+
+
+
+# Make predictions
+predictions.elasticnet <- predict(fit.elasticnet,
+                                  s=cv.elasticnet$lambda.1se,
+                                  newx=test_x)
+
+
+
+# Evaluation and print the evaluation metric
+mse.elasticnet <- mean((test_y - predictions.elasticnet)^2)
+cat("Elastic Net MSE:", mse.elasticnet, "\n")
+
+```
+
+
+
+### 1.3 Choosing the Tuning Parameter
+
+- **Cross-Validation**: The method of choice for tuning parameter selection.
+
+
+
+
+
+
+## 2. Today's lecture
+- Today: regularization (shrinkage coding with a classification example); principal component analysis
+- Lab this Friday, Dec 8 (decision trees, random forest) 
+- Homework 4, Project, Project Peer Evaluation due on the same day
+
