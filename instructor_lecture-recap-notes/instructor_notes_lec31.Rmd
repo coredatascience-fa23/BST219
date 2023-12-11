@@ -1,0 +1,122 @@
+---
+title: "instructor recap notes - lec 31"
+date: "2023-12-11"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+rm(list=ls())
+# load the required libraries
+library(tidyverse)
+library(caret)
+library(glmnet)
+```
+
+## 1. Regularization
+
+### 1.1 What techniques
+
+- Ridge
+- LASSO
+- Elastic-net
+
+\( \text{RSS}_{\text{Ridge}} = \sum_{i=1}^{n} (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 + \lambda \sum_{j=1}^{p} \beta_j^2 \)
+
+\( \text{RSS}_{\text{Lasso}} = \sum_{i=1}^{n} (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 + \lambda \sum_{j=1}^{p} |\beta_j| \)
+
+\( \text{RSS}_{\text{Elastic Net}} = \sum_{i=1}^{n} (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 + \lambda \left( \alpha \sum_{j=1}^{p} |\beta_j| + \frac{1-\alpha}{2} \sum_{j=1}^{p} \beta_j^2 \right) \)
+
+- **Similarities**: 
+  - Idea: add penalty to the regression model to control **overfitting**.
+  - Goal: bias-variance tradeoff (simpler model yet good accuracy)
+  
+- **Key Differences**: 
+  - Type of Penalty
+  - Variable selection
+
+
+### 1.2 How to implement in R
+
+Created a hypothetical dataset `mydata` for illustration.
+
+- response: `response`
+- predictors: `X1`:`X2000`
+
+```{r create some data for illustration, include = FALSE}
+set.seed(1211)
+
+library(glmnet)
+
+# Creating a hypothetical dataset called `mydata`
+
+# Number of observations and predictors
+n <- 1000 # number of observations
+p <- 2000  # number of predictors
+true_p <- 5 
+
+# Generating random predictors
+X <- matrix(rnorm(n * p), n, p)
+
+# Generating a response variable
+noise <- rnorm(n) # random noise
+
+# Only a few predictors influence the response, others are just noise
+response <- apply(X[, 1:true_p], 1, sum) + noise
+
+# Combining predictors and response into a data frame
+mydata <- data.frame(response, X)
+names(mydata) <- c("response", paste0("X", 1:p))
+
+# View the first few rows of the dataset
+# head(mydata)
+
+```
+
+Prepare training and testing set for `glmnet()`:
+
+```{r data splitting}
+# Extracting predictors and response
+predictors_name <- setdiff(names(mydata), "response")
+
+# Create training and test set
+train_index <- createDataPartition(mydata$response, times = 1, p = 0.5, list = FALSE)
+
+train_x <- as.matrix(mydata[train_index, predictors_name])
+test_x <- as.matrix(mydata[-train_index, predictors_name])
+train_y <- mydata$response[train_index]
+test_y <- mydata$response[-train_index]
+```
+
+Fitting all three models:
+
+```{r all models}
+# Cross-validation to find optimal lambda
+cv.ridge <- cv.glmnet(train_x, train_y, alpha=0)
+cv.lasso <- cv.glmnet(train_x, train_y, alpha=1)
+cv.elasticnet <- cv.glmnet(train_x, train_y, alpha=0.5)
+
+# Fit ridge, lasso, en regression with tuned lambda
+fit.ridge <- glmnet(train_x, train_y, alpha=0, lambda=cv.ridge$lambda.1se)
+fit.lasso <- glmnet(train_x, train_y, alpha=1, lambda=cv.lasso$lambda.1se)
+fit.elasticnet <- glmnet(train_x, train_y, alpha=0.5, lambda=cv.elasticnet$lambda.1se)
+
+# Make predictions
+predictions.ridge <- predict(fit.ridge, s=cv.ridge$lambda.1se, newx=test_x)
+predictions.lasso <- predict(fit.lasso, s=cv.lasso$lambda.1se, newx=test_x)
+predictions.elasticnet <- predict(fit.elasticnet, s=cv.elasticnet$lambda.1se, newx=test_x)
+
+# Evaluation and print the evaluation metric
+mse.ridge <- mean((test_y - predictions.ridge)^2)
+mse.lasso <- mean((test_y - predictions.lasso)^2)
+mse.elasticnet <- mean((test_y - predictions.elasticnet)^2)
+
+mse.ridge
+mse.lasso
+mse.elasticnet
+
+```
+
+## 2. Today's lecture
+- Today: principal component analysis, cross validation
+- Homework 4 (two late days), Project, **Project Peer Evaluation** due today
+
