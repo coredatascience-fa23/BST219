@@ -1,0 +1,104 @@
+---
+title: "instructor recap notes - lec 32"
+date: "2023-12-13"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+rm(list=ls())
+# load the required libraries
+library(tidyverse)
+library(caret)
+library(glmnet)
+library(ggplot2)
+```
+## 0. Random quiz
+How many modules have we covered in this course?
+
+- Git and GitHub!
+- R basics
+  - data types
+  - programming basics
+  - basic data wrangling 
+  - pipe operator
+- Data Visualization
+  - ggplot2
+  - maps
+  - principles
+- Advanced wrangling
+  - tidy and reshape data
+  - join table
+  - date and times 
+- Probablity and Regression
+  - linear regression
+  - confounding
+- Machine learning!
+  - workflow of machine learning
+  - types of prediction
+    - classification
+    - regression
+  - machine learning algorithms
+    - generalized linear models (linear, logistic, ...) 
+    - naive bayes
+    - knn
+    - lda, qda
+    - trees and forest 
+    - regularization: lasso, ridge, elastic net
+    - unsupervised: PCA
+  - machine learning metrics / techniques
+    - confusion matrix
+    - mse; rmse
+    - roc; auc
+    - cross validation (tune parameters)
+    
+
+## 1. Principle component analysis
+
+### 1.1 Overview
+Principal Component Analysis (PCA) is a statistical technique used for dimension reduction. It transforms the data into a new coordinate system, reducing the number of dimensions without losing much information (variability). This method is useful in pattern recognition, data compression, and exploratory data analysis.
+
+#### Key Concepts
+
+- **Variance and Covariance**: PCA identifies the directions (principal components) along which the variance in the data is maximal.
+- **Eigenvalues and Eigenvectors**: These are used in PCA to determine the principal components.
+- **Dimension Reduction**: PCA reduces the dimensionality of data by projecting it onto a lower-dimensional subspace.
+
+### 1.2 How to implement in R
+
+We will use the `iris` dataset available in R to demonstrate PCA. This dataset contains measurements for 150 iris flowers from three different species. You can use this command `?iris` for more details about this dataset. 
+
+
+```{r pca}
+# Load the iris dataset
+data(iris)
+
+# Preview the data
+head(iris)
+
+
+# Performing PCA
+iris_pca <- prcomp(iris[,1:4], center = TRUE, scale. = TRUE)
+
+# Summary of PCA
+summary(iris_pca)
+
+
+# Creating a data frame for ggplot
+pca_data <- data.frame(iris_pca$x, Species = iris$Species)
+
+# Plotting
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Species)) +
+  geom_point() +
+  theme_minimal() +
+  ggtitle("PCA of Iris Dataset")
+
+```
+
+
+
+
+
+## 2. Today's lecture
+- Today: cross validation, next steps
+- Homework 4 (two late days)
+
