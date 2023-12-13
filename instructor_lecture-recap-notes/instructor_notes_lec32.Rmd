@@ -94,6 +94,10 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Species)) +
 
 ```
 
+**Interpretation**
+
+The plot shows how the iris dataset is spread across the first two principal components. We can observe how different species cluster differently, indicating that PCA effectively reduces dimensions while preserving species separability.
+
 
 
 
